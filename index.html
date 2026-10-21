@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="bn"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shwapno Outlet</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0b6b3a"><link rel="apple-touch-icon" href="icon-192.png"><link rel="icon" href="icon-192.png">
+<script src="https://accounts.google.com/gsi/client" async onload="draw()"></script>
+<style>
+:root{--bg:#f4f6f5;--card:#fff;--tx:#14231b;--mu:#66756d;--pr:#0b6b3a;--ac:#e11d2e;--ln:#e3e8e5;--ok:#0b8a4a;--wn:#c77d00;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1713;--card:#18231d;--tx:#eaf2ed;--mu:#9baba2;--ln:#2a3a31;--pr:#2fb36d}}
+:root[data-theme="dark"]{--bg:#0f1713;--card:#18231d;--tx:#eaf2ed;--mu:#9baba2;--ln:#2a3a31;--pr:#2fb36d}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Bengali",sans-serif}
+header{background:var(--pr);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+header b{font-size:17px;flex:1}header small{opacity:.85;display:block;font-weight:400}
+main{padding:14px;max-width:900px;margin:0 auto 90px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:16px;padding:14px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:12px}.stat span{color:var(--mu);font-size:12px}.stat b{display:block;font-size:22px}
+h3{margin:0 0 10px;font-size:16px}
+button{font:inherit;border:0;border-radius:12px;padding:12px 16px;background:var(--pr);color:#fff;font-weight:600;cursor:pointer}
+button.s{background:transparent;color:var(--pr);border:1px solid var(--pr)}button.r{background:var(--ac)}button.sm{padding:7px 12px;font-size:13px}
+.big{width:100%;padding:18px;font-size:18px}
+input,select{font:inherit;width:100%;padding:11px;border:1px solid var(--ln);border-radius:10px;background:var(--bg);color:var(--tx);margin:4px 0 10px}
+label{font-size:12px;color:var(--mu)}
+.row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--ln)}.row:last-child{border:0}.row>div{flex:1}.row small{color:var(--mu)}
+.tag{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--bg);border:1px solid var(--ln)}
+.Done{color:var(--ok)}.Late{color:var(--ac)}.Progress{color:var(--wn)}
+.bar{height:10px;background:var(--ln);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pr)}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--ln);display:flex;overflow-x:auto;padding-bottom:env(safe-area-inset-bottom,0px);z-index:6}
+nav a{flex:1;min-width:68px;text-align:center;padding:9px 4px;font-size:11px;color:var(--mu);cursor:pointer}nav a.on{color:var(--pr);font-weight:700}nav a em{display:block;font-style:normal;font-size:20px}
+pre{white-space:pre-wrap;background:var(--bg);border:1px solid var(--ln);border-radius:12px;padding:12px;font:13px/1.5 ui-monospace,monospace}
+.pills{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px}.pills button{padding:6px 12px;font-size:13px}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#14231b;color:#fff;padding:11px 18px;border-radius:12px;display:none;z-index:9}
+.login{max-width:380px;margin:12vh auto;text-align:center;padding:0 16px}.login h1{color:var(--pr);margin:0}
+</style></head><body>
+<div id="app"></div><div id="toast"></div>
+<script>
+/* Data layer: swap these functions for Google Apps Script (fetch API_URL) later. */
+/* === CONFIG: fill after deploying Code.gs === */
+const CONFIG={API_URL:"",CLIENT_ID:""};
+let TOKEN=null,dirty=false;
+const K="swp1";
+const today=new Date(),D=today.getDate(),DIM=new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
+const fmt=d=>String(d.getDate()).padStart(2,"0")+"-"+d.toLocaleString("en",{month:"short"})+"-"+String(d.getFullYear()).slice(2);
+const nowT=()=>today.getHours()*60+today.getMinutes();
+const mins=t=>{let[m,p]=t.split(" ");let[h,n]=m.split(":").map(Number);if(p=="PM"&&h<12)h+=12;if(p=="AM"&&h==12)h=0;return h*60+n};
+function seed(){
+ const T=[["09:00 AM","Opening Housekeeping",5],["10:00 AM","Shelf Arrangement",10],["12:00 PM","Expiry Check",10],["03:00 PM","Stock Check",5],["06:00 PM","Customer Service Check",10]];
+ const E=[["EMP001","Rahim","Sales Associate"],["EMP002","Karim","Cashier"],["EMP003","Salma","Sales Associate"]];
+ let tasks=[],id=1;E.forEach((e,i)=>T.forEach((t,j)=>tasks.push({id:"TASK"+String(id++).padStart(4,"0"),emp:e[0],time:t[0],name:t[1],mark:t[2],st:(i==0&&j==1)||(i==1&&j<2)?"Done":"Pending"})));
+ return{emps:E.map((e,i)=>({id:e[0],name:e[1],des:e[2],status:"Active",in:i<2?"08:"+(i?"20":"55")+" AM":null,out:null})),
+ pend:[{id:"EMP004",name:"Nasrin",des:"Cashier",mail:"nasrin@gmail.com",date:fmt(today)}],
+ tasks,target:{sales:2500000,ff:25000,bk:15000},
+ sales:[...Array(D-1)].map((_,i)=>({d:i+1,s:78000+((i*7919)%30000),f:190+(i%12),b:380+(i%40)})),
+ roster:[["Rahim","Morning","08:00 AM–05:00 PM"],["Karim","Evening","02:00 PM–11:00 PM"],["Salma","Morning","08:00 AM–05:00 PM"]]}}
+let S;try{S=JSON.parse(localStorage.getItem(K))||seed()}catch(e){S=seed()}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}if(TOKEN)pushRemote()};
+let role=null,tab="home",flt="All";
+const me=()=>S.emps[0];
+const toast=m=>{const t=document.getElementById("toast");t.textContent=m+" ✓";t.style.display="block";setTimeout(()=>t.style.display="none",2200)};
+const stat=t=>t.st=="Pending"&&mins(t.time)<nowT()-60?"Late":t.st;
+const money=n=>"৳"+Number(n).toLocaleString("en-IN");
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+function perf(id){const t=S.tasks.filter(x=>x.emp==id);const tot=t.reduce((a,x)=>a+x.mark,0),ach=t.filter(x=>x.st=="Done").reduce((a,x)=>a+x.mark,0);return{n:t.length,done:t.filter(x=>x.st=="Done").length,late:t.filter(x=>stat(x)=="Late").length,tot,ach,p:pct(ach,tot)}}
+function login(r){role=r;tab="home";draw()}
+function go(t){tab=t;draw()}
+function checkIn(){const e=me();e.in=today.toLocaleTimeString("en",{hour:"2-digit",minute:"2-digit"});save();draw();toast("Attendance submitted successfully")}
+function checkOut(){me().out=today.toLocaleTimeString("en",{hour:"2-digit",minute:"2-digit"});save();draw();toast("Check-out saved")}
+function setTask(id,st){const t=S.tasks.find(x=>x.id==id);t.st=st;save();draw();toast(st=="Done"?"Task completed successfully":"Task started")}
+function appr(id,ok){const i=S.pend.findIndex(p=>p.id==id),p=S.pend[i];S.pend.splice(i,1);if(ok)S.emps.push({id:p.id,name:p.name,des:p.des,status:"Active",in:null,out:null});save();draw();toast(ok?"Employee approved":"Employee rejected")}
+function addTask(){const f=n=>document.getElementById(n).value;if(!f("tn")){return toast("Task name দিন")}
+ const emps=f("te")=="ALL"?S.emps.map(e=>e.id):[f("te")];const d1=+f("t1"),d2=+f("t2")||d1;
+ emps.forEach(e=>S.tasks.push({id:"TASK"+String(S.tasks.length+1).padStart(4,"0"),emp:e,time:f("tt"),name:f("tn"),mark:+f("tm")||5,st:"Pending"}));
+ save();draw();toast("Task assigned successfully")}
+function setTarget(){const g=n=>+document.getElementById(n).value;S.target={sales:g("g1"),ff:g("g2"),bk:g("g3")};save();draw();toast("Target updated successfully")}
+function submitSales(){const g=n=>+document.getElementById(n).value;if(!g("ss"))return toast("Sales দিন");
+ S.sales=S.sales.filter(x=>x.d!=D);S.sales.push({d:D,s:g("ss"),f:g("sf"),b:g("sb")});save();draw();toast("Sales report submitted successfully")}
+function report(){const t=S.sales.find(x=>x.d==D);if(!t)return"";const T=S.target,dt=Math.round(T.sales/DIM),df=Math.round(T.ff/DIM),db=Math.round(T.bk/DIM);
+ const tds=S.sales.filter(x=>x.d<=D).reduce((a,x)=>a+x.s,0),tdt=dt*D;const L="━━━━━━━━━━━━━━━━━━━━";
+ return `${L}\nSHWAPNO DAILY SALES REPORT\n${L}\nDear Sir,\n\nDate on: ${fmt(today)}\nTodays Sales Report,\n\nTodays Target: ${dt}\nTodays Sales: ${t.s}\nAcv%: ${pct(t.s,dt)}%\n\nFF Target: ${df}\nFF Actual: ${t.f}\nAcv%: ${pct(t.f,df)}%\n\nBasket Target: ${db}\nBasket Actual: ${t.b}\nAcv: ${pct(t.b,db)}%\n\nTill Date Target: ${tdt}\nTill Date Sales: ${tds}\nAcv%: ${pct(tds,tdt)}%\n\nR,\n${me().name}\nMagura Sadar F219\n${L}`}
+async function copyR(){const r=report();try{await navigator.clipboard.writeText(r);toast("Report copied")}catch(e){const a=document.createElement("textarea");a.value=r;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove();toast("Report copied")}}
+async function shareR(){const r=report();if(navigator.share){try{await navigator.share({text:r})}catch(e){}}else copyR()}
+const salesForm=()=>`<div class="card"><h3>Daily Sales</h3><label>Today's Sales ৳</label><input id="ss" type="number" inputmode="numeric"><label>Today's Footfall</label><input id="sf" type="number" inputmode="numeric"><label>Today's Basket</label><input id="sb" type="number" inputmode="numeric"><button class="big" onclick="submitSales()">SUBMIT</button></div>
+${S.sales.find(x=>x.d==D)?`<div class="card"><h3>Report</h3><pre>${report()}</pre><div style="display:flex;gap:8px"><button style="flex:1" onclick="copyR()">COPY REPORT</button><button class="s" style="flex:1" onclick="shareR()">SHARE</button></div></div>`:""}`;
+const taskRow=(t,adm)=>{const s=stat(t),e=S.emps.find(x=>x.id==t.emp);return `<div class="row"><div><b>${t.name}</b><br><small>${t.time} · Mark ${t.mark}${adm?" · "+e.name:""}</small></div><span class="tag ${s.replace(" ","").replace("InProgress","Progress")}">${s=="Done"?"✓ ":""}${s}</span>${adm?"":t.st=="Done"?"":t.st=="Pending"?`<button class="sm s" onclick="setTask('${t.id}','In Progress')">Start</button>`:`<button class="sm" onclick="setTask('${t.id}','Done')">DONE ✓</button>`}</div>`};
+function empView(){const e=me(),T=S.tasks.filter(t=>t.emp==e.id),p=perf(e.id);let h="";
+ if(tab=="home")h=`<div class="card"><small style="color:var(--mu)">Attendance · ${fmt(today)}</small><h3>${e.in?"Present ✓":"Not Checked In"}</h3>${e.in?`<p>Check-in: ${e.in}${e.out?" · Check-out: "+e.out:""}</p>${e.out?"":`<button class="s big" onclick="checkOut()">CHECK OUT</button>`}`:`<button class="big" onclick="checkIn()">CHECK IN</button>`}</div>
+ <div class="card"><h3>Today's Tasks</h3>${T.map(t=>taskRow(t)).join("")}</div><div class="card"><h3>My Performance</h3><b style="font-size:26px">${p.p}%</b> <small>${p.ach}/${p.tot} marks</small><div class="bar"><i style="width:${p.p}%"></i></div></div>`;
+ if(tab=="tasks")h=`<div class="card"><h3>All Tasks</h3>${T.map(t=>taskRow(t)).join("")}</div>`;
+ if(tab=="roster")h=`<div class="card"><h3>My Roster</h3>${[0,1,2,3,4,5,6].map(i=>{const d=new Date(today);d.setDate(D+i);const r=S.roster[0];return `<div class="row"><div><b>${fmt(d)}</b></div><span>${i==5?"Off Day":r[1]+" "+r[2]}</span></div>`}).join("")}</div>`;
+ if(tab=="target"){const t=S.target;h=`<div class="card"><h3>Monthly Target</h3><div class="row"><div>Sales</div><b>${money(t.sales)}</b></div><div class="row"><div>Footfall</div><b>${t.ff.toLocaleString()}</b></div><div class="row"><div>Basket</div><b>${t.bk.toLocaleString()}</b></div></div>`+salesForm()}
+ if(tab=="profile")h=`<div class="card"><h3>${e.name}</h3><p>${e.id} · ${e.des}<br>Status: ${e.status}</p><button class="s" onclick="role=null;draw()">Logout</button></div>`;
+ return `<header><b>${e.name}<small>${e.id} · ${e.des}</small></b>🔔</header><main>${h}</main><nav>${[["home","🏠","Home"],["tasks","📋","Tasks"],["roster","📅","Roster"],["target","🎯","Target"],["profile","👤","Profile"]].map(n=>`<a class="${tab==n[0]?"on":""}" onclick="go('${n[0]}')"><em>${n[1]}</em>${n[2]}</a>`).join("")}</nav>`}
+function admView(){let h="";const ms=S.sales.filter(x=>x.d<=D).reduce((a,x)=>a+x.s,0),tp=pct(ms,S.target.sales);
+ const pres=S.emps.filter(e=>e.in).length,all=S.tasks,done=all.filter(t=>t.st=="Done").length;
+ if(tab=="home")h=`${S.pend.length?`<div class="card" style="border-color:var(--ac)">🔔 New employee registration request received. <button class="sm" onclick="go('emps')">Review</button></div>`:""}
+ <div class="grid">${[["Employees",S.emps.length],["Present",pres],["Absent",S.emps.length-pres],["Tasks Today",all.length],["Completed",done],["Pending",all.length-done],["Sales Today",money((S.sales.find(x=>x.d==D)||{s:0}).s)],["Target Ach.",tp+"%"]].map(x=>`<div class="stat"><span>${x[0]}</span><b>${x[1]}</b></div>`).join("")}</div><br>
+ <div class="card"><h3>Sales vs Target</h3><p>${money(ms)} / ${money(S.target.sales)}</p><div class="bar"><i style="width:${Math.min(tp,100)}%"></i></div></div>
+ <div class="card"><h3>Task Completion</h3><div class="bar"><i style="width:${pct(done,all.length)}%"></i></div><small>${pct(done,all.length)}% done</small></div>`;
+ if(tab=="emps")h=`${S.pend.map(p=>`<div class="card"><b>${p.name}</b> · ${p.id}<br><small>${p.mail} · ${p.des} · ${p.date}</small><div style="display:flex;gap:8px;margin-top:10px"><button style="flex:1" onclick="appr('${p.id}',1)">Approve</button><button class="r" style="flex:1" onclick="appr('${p.id}',0)">Reject</button></div></div>`).join("")}<div class="card"><h3>Employees</h3>${S.emps.map(e=>`<div class="row"><div><b>${e.name}</b><br><small>${e.id} · ${e.des}</small></div><span class="tag">${e.in?"Present":"Absent"}</span></div>`).join("")}</div>`;
+ if(tab=="tasks"){const L=S.tasks.filter(t=>flt=="All"||stat(t)==flt);h=`<div class="card"><h3>Assign Task</h3><label>Employee</label><select id="te"><option value="ALL">All employees</option>${S.emps.map(e=>`<option value="${e.id}">${e.name}</option>`).join("")}</select><label>Task</label><input id="tn"><label>Time</label><select id="tt">${["09:00 AM","10:00 AM","12:00 PM","03:00 PM","06:00 PM"].map(x=>`<option>${x}</option>`).join("")}</select><label>Mark</label><input id="tm" type="number" value="10"><input id="t1" type="hidden" value="${D}"><button class="big" onclick="addTask()">ASSIGN</button></div>
+ <div class="card"><h3>Live Monitoring</h3><div class="pills">${["All","Pending","In Progress","Done","Late"].map(f=>`<button class="${flt==f?"":"s"}" onclick="flt='${f}';draw()">${f}</button>`).join("")}</div>${L.map(t=>taskRow(t,1)).join("")||"<small>No tasks</small>"}</div>`}
+ if(tab=="perf"){const R=S.emps.map(e=>({e,...perf(e.id)})).sort((a,b)=>b.p-a.p);h=`<div class="card"><h3>Performance Ranking</h3>${R.map((r,i)=>`<div class="row"><b>${i+1}.</b><div><b>${r.e.name}</b><br><small>${r.done}/${r.n} done · ${r.late} late · ${r.ach}/${r.tot} marks</small></div><b>${r.p}%</b></div>`).join("")}</div>`}
+ if(tab=="sales")h=`<div class="card"><h3>Monthly Target</h3><label>Sales ৳</label><input id="g1" type="number" value="${S.target.sales}"><label>Footfall</label><input id="g2" type="number" value="${S.target.ff}"><label>Basket</label><input id="g3" type="number" value="${S.target.bk}"><button onclick="setTarget()">Save Target</button></div>`+salesForm();
+ return `<header><b>Shwapno Admin<small>Outlet Dashboard</small></b><button class="sm s" style="color:#fff;border-color:#fff" onclick="role=null;draw()">Logout</button></header><main>${h}</main><nav>${[["home","📊","Dashboard"],["emps","👥","Employees"],["tasks","📋","Tasks"],["perf","🏆","Performance"],["sales","💰","Sales"]].map(n=>`<a class="${tab==n[0]?"on":""}" onclick="go('${n[0]}')"><em>${n[1]}</em>${n[2]}</a>`).join("")}</nav>`}
+function draw(){document.getElementById("app").innerHTML=!role?`<div class="login"><h1>Shwapno</h1><p style="color:var(--mu)">Outlet Employee Management · Magura Sadar</p><div class="card"><label>Email</label><input placeholder="you@gmail.com"><label>Password</label><input type="password"><p><small>Demo: role বেছে নিন</small></p><button class="big" onclick="login('emp')">Employee (Rahim)</button><br><br><button class="big s" onclick="login('adm')">Admin</button></div></div>`:role=="emp"?empView():admView()}
+async function api(action,data){const r=await fetch(CONFIG.API_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({token:TOKEN,action,data})});return r.json()}
+async function pushRemote(){dirty=true;try{const j=role=="adm"?await api("save",{...S,target:S.target}):await api("empSave",{emps:S.emps.slice(0,1),tasks:S.tasks,sales:S.sales.filter(x=>x.d==D)});if(j.error)throw new Error(j.error);dirty=false}catch(e){toast("Saved offline, will sync")}}
+addEventListener("online",()=>dirty&&TOKEN&&pushRemote());
+function onCred(r){TOKEN=r.credential;boot()}
+async function boot(){try{const j=await api("load");if(j.error){TOKEN=null;return alert(j.error)}
+ if(j.status=="unregistered"){const id=prompt("Employee ID"),name=prompt("Full name"),des=prompt("Designation");if(id&&name){const x=await api("register",{id,name,des,date:fmt(today)});alert(x.error||"Registration submitted. Pending admin approval.")}TOKEN=null;return}
+ if(j.status){alert("Account status: "+j.status);TOKEN=null;return}
+ S=j.state;role=j.role=="admin"?"adm":"emp";tab="home";draw()}catch(e){alert("Server error")}}
+const _draw=draw;draw=function(){_draw();if(!role&&CONFIG.CLIENT_ID&&window.google&&google.accounts){document.querySelector(".login .card").innerHTML='<div id="gbtn" style="display:flex;justify-content:center"></div>';google.accounts.id.initialize({client_id:CONFIG.CLIENT_ID,callback:onCred});google.accounts.id.renderButton(document.getElementById("gbtn"),{theme:"outline",size:"large"})}};
+if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+draw();
+</script></body></html>
